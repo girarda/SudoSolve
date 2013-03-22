@@ -102,7 +102,7 @@ public class MainActivity extends Activity {
     private void openImage(String pathToImage) {
     	myBitmap = BitmapFactory.decodeFile(pathToImage);
     	sudoGrabber = new SudokuGrabber(myBitmap);
-    	myBitmap = sudoGrabber.getConvertedResult();
+    	myBitmap = sudoGrabber.getSolvedSudoku();
     	displayImage();
 	}
 
