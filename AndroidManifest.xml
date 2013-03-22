@@ -14,7 +14,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.girarda.sudosolve.MainActivity"
+            android:name="com.girarda.sudosolve.app.MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -23,8 +23,12 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.girarda.sudosolve.ImageSelector"
+            android:name="com.girarda.sudosolve.app.ImageSelector"
             android:label="@string/title_activity_image_selector" >
+        </activity>
+        <activity
+            android:name="com.girarda.sudosolve.app.ImageLoader"
+            android:label="@string/title_activity_image_loader" >
         </activity>
     </application>
 

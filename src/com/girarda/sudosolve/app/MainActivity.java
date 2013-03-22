@@ -1,4 +1,4 @@
-package com.girarda.sudosolve;
+package com.girarda.sudosolve.app;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
@@ -7,6 +7,9 @@ import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.highgui.Highgui;
 import org.opencv.imgproc.Imgproc;
+
+import com.girarda.sudosolve.R;
+import com.girarda.sudosolve.sudograb.SudokuGrabber;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -33,6 +36,8 @@ public class MainActivity extends Activity {
     private String filemanagerstring;
 
 	private Bitmap myBitmap;
+	
+	private SudokuGrabber sudoGrabber;
 	
     private BaseLoaderCallback mOpenCVCallBack = new BaseLoaderCallback(this) {
         @Override
@@ -96,9 +101,8 @@ public class MainActivity extends Activity {
 
     private void openImage(String pathToImage) {
     	myBitmap = BitmapFactory.decodeFile(pathToImage);
-    	Mat mat = new Mat();
-    	bitmapToMatrix(myBitmap, mat);
-    	 matrixToBitmap(mat, myBitmap);
+    	sudoGrabber = new SudokuGrabber(myBitmap);
+    	myBitmap = sudoGrabber.getConvertedResult();
     	displayImage();
 	}
 
@@ -121,15 +125,5 @@ public class MainActivity extends Activity {
             return cursor.getString(column_index);
         }
         else return null;
-    }
-    
-    private void bitmapToMatrix(Bitmap bitmapImg, Mat matrix) {
-    	Utils.bitmapToMat(bitmapImg, matrix);
-    }
-    
-    private void matrixToBitmap(Mat matrix, Bitmap bitmap) {
-    	Mat result = new Mat();
-    	Imgproc.cvtColor(matrix, result, Imgproc.COLOR_RGB2BGRA);
-    	Utils.matToBitmap(result, bitmap);
     }
 }
