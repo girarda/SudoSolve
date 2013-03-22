@@ -27,7 +27,7 @@ public class SudokuGrabber {
     }
     
     public Bitmap getConvertedResult() {
-    	bitmapToMatrix(originalImg, matrix);
+    	matrixToBitmap(matrix, originalImg);
     	return originalImg;
     }
 
