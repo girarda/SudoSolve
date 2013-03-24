@@ -38,7 +38,7 @@ public class SudokuGrabber {
 		applyThreshold(imgMatrix);
 		Point[] sudokuGrid =detectSudokuGrid(intermediateMat);
 		Point[] corners = detectCorners(intermediateMat, sudokuGrid);
-		newImg = warpSudokuGrid(corners, intermediateMat);
+		newImg = warpSudokuGrid(corners, imgMatrix);
 		return getConvertedResult();
 	}
 
@@ -142,8 +142,8 @@ public class SudokuGrabber {
 
 	private void matrixToBitmap(Mat matrix, Bitmap bitmap) {
 		Mat result = new Mat();
-		Imgproc.cvtColor(matrix, result, Imgproc.COLOR_GRAY2BGRA);
-		Utils.matToBitmap(result, bitmap);
+		//Imgproc.cvtColor(matrix, result, Imgproc.COLOR_GRAY2BGRA);
+		Utils.matToBitmap(matrix, bitmap);
 	}
 
 	public Bitmap getConvertedResult() {
