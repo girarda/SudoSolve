@@ -27,6 +27,7 @@ public class SudokuGrabber {
 		originalImg = bitmapImg;
 		intermediateMat = new Mat(originalImg.getHeight(), originalImg.getWidth(), CvType.CV_32FC2);
 		bitmapToMatrix(originalImg, imgMatrix);
+		intermediateMat = imgMatrix.clone();
 	}
 
 	private void bitmapToMatrix(Bitmap bitmapImg, Mat matrix) {
@@ -44,14 +45,14 @@ public class SudokuGrabber {
 
 	private void applyThreshold(Mat matrix) {
 		// TODO Change size to (9,9)? it is slower but it finds the contour of the second picture.
-		Imgproc.GaussianBlur(matrix, matrix, new Size(11, 11), 0);
+		Imgproc.GaussianBlur(intermediateMat, intermediateMat, new Size(11, 11), 0);
 
-		Imgproc.adaptiveThreshold(matrix, intermediateMat, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 5, 2);
+		Imgproc.adaptiveThreshold(intermediateMat, intermediateMat, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 5, 2);
 		Core.bitwise_not(intermediateMat, intermediateMat);
 
 		dilate(intermediateMat);
 
-		Imgproc.cvtColor(intermediateMat, matrix, Imgproc.COLOR_GRAY2BGRA, 4);
+		//Imgproc.cvtColor(intermediateMat, matrix, Imgproc.COLOR_GRAY2BGRA, 4);
 
 	}
 
