@@ -21,10 +21,11 @@ public class SudokuGrabber {
 	private Bitmap originalImg;
 	private Mat imgMatrix = new Mat();
 	private Mat intermediateMat;
+	private Mat newImg;
 	
 	public SudokuGrabber(Bitmap bitmapImg) {
 		originalImg = bitmapImg;
-		intermediateMat = new Mat(originalImg.getHeight(), originalImg.getWidth(), CvType.CV_32F);
+		intermediateMat = new Mat(originalImg.getHeight(), originalImg.getWidth(), CvType.CV_32FC2);
 		bitmapToMatrix(originalImg, imgMatrix);
 	}
 
@@ -37,6 +38,7 @@ public class SudokuGrabber {
 		applyThreshold(imgMatrix);
 		Point[] sudokuGrid =detectSudokuGrid(intermediateMat);
 		Point[] corners = detectCorners(intermediateMat, sudokuGrid);
+		newImg = warpSudokuGrid(corners, intermediateMat);
 		return getConvertedResult();
 	}
 
@@ -88,16 +90,55 @@ public class SudokuGrabber {
 	}
 
 	private Point[] detectCorners(Mat matrix, Point[] points) {
+		// Returned corners order in array:
+		// 1 0
+		// 2 3
+		
 		MatOfPoint2f approxCurve =  new MatOfPoint2f();
 		MatOfPoint2f source = new MatOfPoint2f(points);
-		Imgproc.approxPolyDP(source, approxCurve, 100.0, true);
+		Imgproc.approxPolyDP(source, approxCurve, 25.0, true);
 		
 		Point[] corners = approxCurve.toArray();
-		for (Point p: corners) {
-			Core.circle(matrix, p, 100, new Scalar(255,0,0));
+		for (int i = 0; i < corners.length; i++) {
+			Core.circle(matrix, corners[i], 10, new Scalar(255,0,0));
 		}
 		return corners;
-	}		
+	}
+	
+	private Mat warpSudokuGrid(Point[] corners, Mat matrix) {
+		Point ptTopLeft = corners[1];			Point ptTopRight = corners[0];
+		Point ptBottomLeft= corners[2];			Point ptBottomRight = corners[3];
+		
+		double maxLength = (ptBottomLeft.x-ptBottomRight.x)*(ptBottomLeft.x-ptBottomRight.x) + (ptBottomLeft.y-ptBottomRight.y)*(ptBottomLeft.y-ptBottomRight.y);
+	    double temp = (ptTopRight.x-ptBottomRight.x)*(ptTopRight.x-ptBottomRight.x) + (ptTopRight.y-ptBottomRight.y)*(ptTopRight.y-ptBottomRight.y);
+	    if(temp > maxLength) maxLength = temp;
+	 
+	    temp = (ptTopRight.x-ptTopLeft.x)*(ptTopRight.x-ptTopLeft.x) + (ptTopRight.y-ptTopLeft.y)*(ptTopRight.y-ptTopLeft.y);
+	    if(temp > maxLength) maxLength = temp;
+	 
+	    temp = (ptBottomLeft.x-ptTopLeft.x)*(ptBottomLeft.x-ptTopLeft.x) + (ptBottomLeft.y-ptTopLeft.y)*(ptBottomLeft.y-ptTopLeft.y);
+	    if(temp > maxLength) maxLength = temp;
+	 
+	    maxLength = Math.sqrt((double)maxLength);
+	    
+	    Point[] src = new Point[4];
+	    Point[] dst = new Point[4];
+	    src[0] = ptTopLeft;            dst[0] = new Point(0,0);
+	    src[1] = ptTopRight;        dst[1] = new Point(maxLength-1, 0);
+	    src[2] = ptBottomRight;        dst[2] = new Point(maxLength-1, maxLength-1);
+	    src[3] = ptBottomLeft;        dst[3] = new Point(0, maxLength-1);
+	    
+	    Mat srcMat = new Mat(4,1, CvType.CV_32FC2);
+	    Mat dstMat = new Mat(4,1, CvType.CV_32FC2);
+	    for (int i = 0; i < src.length; i++) {
+	    	srcMat.put(i, 0, new double[]{src[i].x, src[i].y});
+	    	dstMat.put(i, 0, new double[]{dst[i].x, dst[i].y});
+	    }
+	    
+		Mat undistorted = new Mat((int)maxLength, (int)maxLength, CvType.CV_32FC2);
+	    Imgproc.warpPerspective(matrix, undistorted, Imgproc.getPerspectiveTransform(srcMat, dstMat), new Size(maxLength, maxLength));
+	    return undistorted;
+	}
 
 	private void matrixToBitmap(Mat matrix, Bitmap bitmap) {
 		Mat result = new Mat();
@@ -106,8 +147,9 @@ public class SudokuGrabber {
 	}
 
 	public Bitmap getConvertedResult() {
-		matrixToBitmap(intermediateMat, originalImg);
-		return originalImg;
+		Bitmap newBitmap = Bitmap.createBitmap(newImg.width(), newImg.height(), originalImg.getConfig());
+		matrixToBitmap(newImg, newBitmap);
+		return newBitmap;
 	}
 
 }
