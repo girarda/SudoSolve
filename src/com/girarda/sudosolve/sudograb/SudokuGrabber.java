@@ -25,14 +25,17 @@ public class SudokuGrabber {
 	
 	public SudokuGrabber(Bitmap bitmapImg) {
 		originalImg = bitmapImg;
-		intermediateMat = new Mat(originalImg.getHeight(), originalImg.getWidth(), CvType.CV_32FC2);
 		bitmapToMatrix(originalImg, imgMatrix);
 		intermediateMat = imgMatrix.clone();
+		convertBGR2Gray(intermediateMat);
+	}
+	
+	private void convertBGR2Gray(Mat matrix) {
+		Imgproc.cvtColor(matrix, matrix, Imgproc.COLOR_BGR2GRAY);
 	}
 
 	private void bitmapToMatrix(Bitmap bitmapImg, Mat matrix) {
 		Utils.bitmapToMat(bitmapImg, matrix);
-		Imgproc.cvtColor(matrix, matrix, Imgproc.COLOR_BGR2GRAY);
 	}
 
 	public Bitmap getSolvedSudoku() {
@@ -40,6 +43,7 @@ public class SudokuGrabber {
 		Point[] sudokuGrid =detectSudokuGrid(intermediateMat);
 		Point[] corners = detectCorners(intermediateMat, sudokuGrid);
 		newImg = warpSudokuGrid(corners, imgMatrix);
+		Mat[][] cells = getCells(imgMatrix);
 		return getConvertedResult();
 	}
 
@@ -51,9 +55,6 @@ public class SudokuGrabber {
 		Core.bitwise_not(intermediateMat, intermediateMat);
 
 		dilate(intermediateMat);
-
-		//Imgproc.cvtColor(intermediateMat, matrix, Imgproc.COLOR_GRAY2BGRA, 4);
-
 	}
 
 	private void dilate(Mat matrix) {
@@ -136,14 +137,27 @@ public class SudokuGrabber {
 	    	dstMat.put(i, 0, new double[]{dst[i].x, dst[i].y});
 	    }
 	    
-		Mat undistorted = new Mat((int)maxLength, (int)maxLength, CvType.CV_32FC2);
-	    Imgproc.warpPerspective(matrix, undistorted, Imgproc.getPerspectiveTransform(srcMat, dstMat), new Size(maxLength, maxLength));
-	    return undistorted;
+		Mat undistortedGrid = new Mat((int)maxLength, (int)maxLength, CvType.CV_32FC2);
+	    Imgproc.warpPerspective(matrix, undistortedGrid, Imgproc.getPerspectiveTransform(srcMat, dstMat), new Size(maxLength, maxLength));
+
+	    return undistortedGrid;
+	}
+	
+	private Mat[][] getCells(Mat undistortedGrid) {
+	    //draw grid lines
+		Mat[][] cells = new Mat[10][10];
+	    for (int row = 0; row < 9; row++) {
+	    	for (int col = 0; col < 9; col++) {
+		    	Core.circle(undistortedGrid, new Point(undistortedGrid.rows()*row/9, undistortedGrid.rows()*col/9), 5, new Scalar(255,0,0));
+	    		cells[row][col] = undistortedGrid.submat(undistortedGrid.rows()*row/9,undistortedGrid.rows()*(row+1)/9,undistortedGrid.cols()*col/9,undistortedGrid.cols()*(col+1)/9);
+	    	}
+	    }
+	    
+	    //undistortedGrid = undistortedGrid.submat(0, undistortedGrid.rows()/9, 0, undistortedGrid.rows()/9);
+	    return cells;
 	}
 
 	private void matrixToBitmap(Mat matrix, Bitmap bitmap) {
-		Mat result = new Mat();
-		//Imgproc.cvtColor(matrix, result, Imgproc.COLOR_GRAY2BGRA);
 		Utils.matToBitmap(matrix, bitmap);
 	}
 
@@ -152,5 +166,4 @@ public class SudokuGrabber {
 		matrixToBitmap(newImg, newBitmap);
 		return newBitmap;
 	}
-
 }
