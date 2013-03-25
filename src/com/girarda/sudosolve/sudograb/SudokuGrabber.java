@@ -16,6 +16,8 @@ import org.opencv.imgproc.Imgproc;
 import org.opencv.ml.CvSVM;
 import org.opencv.core.Point;
 
+import com.girarda.sudosolve.imageprocessing.ImageProcessing;
+
 import android.graphics.Bitmap;
 
 public class SudokuGrabber {
@@ -24,26 +26,16 @@ public class SudokuGrabber {
 	private Mat imgMatrix = new Mat();
 	private Mat intermediateMat;
 	private Mat newImg;
-	private CvSVM svm = new CvSVM();
-
 
 	public SudokuGrabber(Bitmap bitmapImg) {
 		originalImg = bitmapImg;
-		bitmapToMatrix(originalImg, imgMatrix);
+		ImageProcessing.bitmapToMatrix(originalImg, imgMatrix);
 		intermediateMat = imgMatrix.clone();
-		convertBGR2Gray(intermediateMat);
-	}
-
-	private void convertBGR2Gray(Mat matrix) {
-		Imgproc.cvtColor(matrix, matrix, Imgproc.COLOR_BGR2GRAY);
-	}
-
-	private void bitmapToMatrix(Bitmap bitmapImg, Mat matrix) {
-		Utils.bitmapToMat(bitmapImg, matrix);
+		ImageProcessing.convertBGR2Gray(intermediateMat);
 	}
 
 	public Bitmap getSolvedSudoku() {
-		applyThreshold(intermediateMat);
+		ImageProcessing.applyThreshold(intermediateMat);
 		Point[] sudokuGrid = detectSudokuGrid(intermediateMat);
 		Point[] corners = detectCorners(intermediateMat, sudokuGrid);
 		newImg = warpSudokuGrid(corners, imgMatrix);
@@ -51,31 +43,11 @@ public class SudokuGrabber {
 		return getConvertedResult();
 	}
 
-	private void applyThreshold(Mat matrix) {
-		// TODO Change size to (9,9)? it is slower but it finds the contour of the second picture.
-
-		matrix.assignTo(matrix, CvType.CV_8UC1);
-
-		Imgproc.GaussianBlur(matrix, matrix, new Size(11, 11), 0);
-
-		Imgproc.adaptiveThreshold(matrix, matrix, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 5, 2);
-		Core.bitwise_not(matrix, matrix);
-
-		dilate(matrix);
-	}
-
-	private void dilate(Mat matrix) {
-		// TODO add erode method to cancel dilate?
-		Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_DILATE, new Size(3,3), new Point(1,1));
-		Imgproc.dilate(matrix, matrix, kernel);
-	}
-
-
 	private Point[] detectSudokuGrid(Mat matrix) {
-		GetIsolatedBiggestContour(matrix);
+		ImageProcessing.GetIsolatedBiggestContour(matrix);
 		List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
 		Imgproc.findContours(matrix, contours, new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
-		return findBiggestContour(contours).toArray();
+		return ImageProcessing.findBiggestContour(contours).toArray();
 	}
 
 	private Point[] detectCorners(Mat matrix, Point[] points) {
@@ -135,74 +107,15 @@ public class SudokuGrabber {
 		for (int row = 0; row < 9; row++) {
 			for (int col = 0; col < 9; col++) {
 				cells[row][col] = undistortedGrid.submat(undistortedGrid.rows()*row/9,undistortedGrid.rows()*(row+1)/9,undistortedGrid.cols()*col/9,undistortedGrid.cols()*(col+1)/9);
-				cells[row][col] = preprosess(cells[row][col], 10, 10);
+				cells[row][col] = ImageProcessing.preprosessForOCR(cells[row][col], 10, 10);
 			}
 		}
 		return cells;
 	}
 
-	private Mat preprosess(Mat imgSrc, int newWidth, int newHeight) {
-		Mat result = new Mat(imgSrc.size(), CvType.CV_32F);
-		imgSrc.assignTo(result, CvType.CV_32F);
-		Mat scaledResult = new Mat();
-
-		convertBGR2Gray(result);
-		applyThreshold(result);
-
-		result = GetIsolatedBiggestContour(result);
-
-		Imgproc.resize(result, scaledResult, new Size(newWidth, newHeight));
-		return scaledResult;
-	}
-
-	private Mat GetIsolatedBiggestContour(Mat img) {
-		List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
-		Imgproc.findContours(img, contours, new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
-		MatOfPoint biggestContour = findBiggestContour(contours);
-
-		if (biggestContour == null) {
-			// No contour in img
-			return img;
-		}
-		for (int i = 0; i < contours.size(); i++) {
-			Scalar colorToDrawContour = new Scalar(0,0,0);
-			if (contours.get(i) == biggestContour) {
-				colorToDrawContour = new Scalar(255,0,0);
-			}
-			Imgproc.drawContours(img, contours, i, colorToDrawContour);
-
-		}
-		return img.submat(Imgproc.boundingRect(biggestContour));
-
-	}
-
-	private MatOfPoint findBiggestContour(List<MatOfPoint> contours) {
-		double maxArea = -1;
-		int maxAreaIdx = -1;
-
-		for (int i = 0; i < contours.size(); i++) {
-			MatOfPoint contour = contours.get(i);
-			double contourarea = Imgproc.contourArea(contour);
-			if (contourarea > maxArea) {
-				maxArea = contourarea;
-				maxAreaIdx = i;
-			}
-		}
-		if (maxArea != -1) {
-			return contours.get(maxAreaIdx);
-		}
-		else {
-			return null;
-		}
-	}
-
-	private void matrixToBitmap(Mat matrix, Bitmap bitmap) {
-		Utils.matToBitmap(matrix, bitmap);
-	}
-
 	public Bitmap getConvertedResult() {
 		Bitmap newBitmap = Bitmap.createBitmap(newImg.width(), newImg.height(), originalImg.getConfig());
-		matrixToBitmap(newImg, newBitmap);
+		ImageProcessing.matrixToBitmap(newImg, newBitmap);
 		return newBitmap;
 	}
 }
