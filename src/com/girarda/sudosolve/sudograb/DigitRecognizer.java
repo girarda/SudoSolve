@@ -43,10 +43,7 @@ public class DigitRecognizer {
 		knn = new CvKNearest(trainData, trainClasses, new Mat(), false, K);
 	}
 
-	public float classify(Mat img, int showResult) {
-
-	}
 
 	public void test() {
-
+	}
 }
