@@ -48,7 +48,6 @@ public class SudokuGrabber {
 		Point[] corners = detectCorners(intermediateMat, sudokuGrid);
 		newImg = warpSudokuGrid(corners, imgMatrix);
 		Mat[][] cells = getCells(newImg);
-		newImg = cells[3][0];
 		return getConvertedResult();
 	}
 
