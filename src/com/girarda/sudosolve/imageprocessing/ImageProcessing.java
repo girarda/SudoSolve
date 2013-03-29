@@ -13,6 +13,8 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
+import com.googlecode.leptonica.android.Enhance;
+
 import android.graphics.Bitmap;
 
 public class ImageProcessing {
@@ -96,10 +98,20 @@ public class ImageProcessing {
 		Mat scaledResult = new Mat();
 
 		convertBGR2Gray(result);
-		applyThreshold(result);
 
-		result = GetIsolatedBiggestContour(result);
+		result.assignTo(result, CvType.CV_8UC1);
 
+		Imgproc.GaussianBlur(result, result, new Size(11, 11), 0);
+
+		Imgproc.adaptiveThreshold(result, result, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 5, 2);
+		
+		Imgproc.Canny(result, new Mat(), Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY);
+		
+		result = result.submat(10, result.width()-10, 10, result.height()-10);
+		
+		//dilate(result);
+		
+		//result = GetIsolatedBiggestContour(result);
 		Imgproc.resize(result, scaledResult, new Size(newWidth, newHeight));
 		return scaledResult;
 	}

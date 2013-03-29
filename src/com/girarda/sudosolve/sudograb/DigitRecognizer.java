@@ -1,20 +1,14 @@
 package com.girarda.sudosolve.sudograb;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.FileOutputStream;
 
-import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.Point;
-import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
-import org.opencv.core.Size;
-import org.opencv.imgproc.Imgproc;
 import org.opencv.ml.CvKNearest;
 import org.opencv.ml.CvSVM;
+
+import android.os.Environment;
 
 
 public class DigitRecognizer {
@@ -22,20 +16,27 @@ public class DigitRecognizer {
 	int classes = 10;
 	int trainSamples = 50;
 	int size = 40;
-	String fileDirectory = "../OCR/";
 	CvKNearest knn = new CvKNearest();
 	Mat trainData = new Mat(trainSamples*classes, size*size, CvType.CV_32FC1);
 	Mat trainClasses = new Mat(trainSamples*classes, 1, CvType.CV_32FC1);
 	int K = 10;
+	
+	File dirPaths = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+	
+
 
 
 	public DigitRecognizer() {
-		//getData();
+		getData();
 		//train();
 		//test();
 	}
 
 	private void getData() {
+		for (int number = 0; number <= classes; number++) {
+			for (int sample = 0; sample <= trainSamples; sample++) {
+			}
+		}
 
 	}
 

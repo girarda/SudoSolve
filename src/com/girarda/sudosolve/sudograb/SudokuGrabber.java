@@ -3,22 +3,21 @@ package com.girarda.sudosolve.sudograb;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.Rect;
+import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.ml.CvSVM;
-import org.opencv.core.Point;
-
-import com.girarda.sudosolve.imageprocessing.ImageProcessing;
 
 import android.graphics.Bitmap;
+import android.os.Environment;
+
+import com.girarda.sudosolve.imageprocessing.ImageProcessing;
+import com.googlecode.tesseract.android.TessBaseAPI;
 
 public class SudokuGrabber {
 
@@ -26,8 +25,13 @@ public class SudokuGrabber {
 	private Mat imgMatrix = new Mat();
 	private Mat intermediateMat;
 	private Mat newImg;
+	private TessBaseAPI baseAPI = new TessBaseAPI();
+
 
 	public SudokuGrabber(Bitmap bitmapImg) {
+		baseAPI.init(Environment.getExternalStorageDirectory().toString() + "/tesseract/", "eng");
+		baseAPI.setVariable(TessBaseAPI.VAR_CHAR_WHITELIST, "123456789");
+		baseAPI.setVariable(TessBaseAPI.VAR_ACCURACYVSPEED, new Integer(TessBaseAPI.AVS_MOST_ACCURATE).toString());
 		originalImg = bitmapImg;
 		ImageProcessing.bitmapToMatrix(originalImg, imgMatrix);
 		intermediateMat = imgMatrix.clone();
@@ -40,6 +44,8 @@ public class SudokuGrabber {
 		Point[] corners = detectCorners(intermediateMat, sudokuGrid);
 		newImg = warpSudokuGrid(corners, imgMatrix);
 		Mat[][] cells = getCells(newImg);
+		newImg = cells[0][1];
+		baseAPI.end();
 		return getConvertedResult();
 	}
 
@@ -107,7 +113,17 @@ public class SudokuGrabber {
 		for (int row = 0; row < 9; row++) {
 			for (int col = 0; col < 9; col++) {
 				cells[row][col] = undistortedGrid.submat(undistortedGrid.rows()*row/9,undistortedGrid.rows()*(row+1)/9,undistortedGrid.cols()*col/9,undistortedGrid.cols()*(col+1)/9);
-				cells[row][col] = ImageProcessing.preprosessForOCR(cells[row][col], 10, 10);
+				cells[row][col] = ImageProcessing.preprosessForOCR(cells[row][col], 100,100);
+				
+				Bitmap img = Bitmap.createBitmap(cells[row][col].width(),cells[row][col].width(),Bitmap.Config.ARGB_8888);
+				ImageProcessing.matrixToBitmap(cells[row][col], img);
+				img = img.copy(Bitmap.Config.ARGB_8888, true);
+				baseAPI.setImage(img);
+				String recog = baseAPI.getUTF8Text();
+				if (recog != "")
+					System.out.println("(" + row +"," + col +"): " + recog);
+					//Core.putText(cells[row][col], recog, new Point(0,0), 0, 0.0, new Scalar(255,0,0));
+				baseAPI.clear();
 			}
 		}
 		return cells;
