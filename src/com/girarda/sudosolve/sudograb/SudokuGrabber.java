@@ -25,13 +25,9 @@ public class SudokuGrabber {
 	private Mat imgMatrix = new Mat();
 	private Mat intermediateMat;
 	private Mat newImg;
-	private TessBaseAPI baseAPI = new TessBaseAPI();
-
+	private DigitRecognizer digitRec = new DigitRecognizer();
 
 	public SudokuGrabber(Bitmap bitmapImg) {
-		baseAPI.init(Environment.getExternalStorageDirectory().toString() + "/tesseract/", "eng");
-		baseAPI.setVariable(TessBaseAPI.VAR_CHAR_WHITELIST, "123456789");
-		baseAPI.setVariable(TessBaseAPI.VAR_ACCURACYVSPEED, new Integer(TessBaseAPI.AVS_MOST_ACCURATE).toString());
 		originalImg = bitmapImg;
 		ImageProcessing.bitmapToMatrix(originalImg, imgMatrix);
 		intermediateMat = imgMatrix.clone();
@@ -44,8 +40,12 @@ public class SudokuGrabber {
 		Point[] corners = detectCorners(intermediateMat, sudokuGrid);
 		newImg = warpSudokuGrid(corners, imgMatrix);
 		Mat[][] cells = getCells(newImg);
-		newImg = cells[0][1];
-		baseAPI.end();
+		int[][] cellNumbers = digitRec.getSudokuNumbers(cells);
+		for (int row = 0; row < 9; row++) {
+			for (int col = 0; col < 9; col++) {
+				System.out.println("(" + row + "," + col + "): " + cellNumbers[row][col]);
+			}
+		}
 		return getConvertedResult();
 	}
 
@@ -114,16 +114,6 @@ public class SudokuGrabber {
 			for (int col = 0; col < 9; col++) {
 				cells[row][col] = undistortedGrid.submat(undistortedGrid.rows()*row/9,undistortedGrid.rows()*(row+1)/9,undistortedGrid.cols()*col/9,undistortedGrid.cols()*(col+1)/9);
 				cells[row][col] = ImageProcessing.preprosessForOCR(cells[row][col], 100,100);
-				
-				Bitmap img = Bitmap.createBitmap(cells[row][col].width(),cells[row][col].width(),Bitmap.Config.ARGB_8888);
-				ImageProcessing.matrixToBitmap(cells[row][col], img);
-				img = img.copy(Bitmap.Config.ARGB_8888, true);
-				baseAPI.setImage(img);
-				String recog = baseAPI.getUTF8Text();
-				if (recog != "")
-					System.out.println("(" + row +"," + col +"): " + recog);
-					//Core.putText(cells[row][col], recog, new Point(0,0), 0, 0.0, new Scalar(255,0,0));
-				baseAPI.clear();
 			}
 		}
 		return cells;
