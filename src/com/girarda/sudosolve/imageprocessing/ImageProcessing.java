@@ -107,7 +107,7 @@ public class ImageProcessing {
 		
 		Imgproc.Canny(result, new Mat(), Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY);
 		
-		result = result.submat(10, result.width()-10, 10, result.height()-10);
+		result = result.submat(7,result.rows()-5, 5, result.rows()-10);
 		
 		//dilate(result);
 		

@@ -14,10 +14,10 @@ import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import android.graphics.Bitmap;
-import android.os.Environment;
 
 import com.girarda.sudosolve.imageprocessing.ImageProcessing;
-import com.googlecode.tesseract.android.TessBaseAPI;
+import com.girarda.sudosolve.sudoku.Board;
+import com.girarda.sudosolve.sudokusolver.SudokuSolver;
 
 public class SudokuGrabber {
 
@@ -41,9 +41,27 @@ public class SudokuGrabber {
 		newImg = warpSudokuGrid(corners, imgMatrix);
 		Mat[][] cells = getCells(newImg);
 		int[][] cellNumbers = digitRec.getSudokuNumbers(cells);
+		//		for (int row = 0; row < 9; row++) {
+		//			for (int col = 0; col < 9; col++) {
+		//				System.out.println("(" + row + "," + col + "): " + cellNumbers[row][col]);
+		//			}
+		//		}
+		//		newImg = cells[7][8];
+		intermediateMat = null;
+		cells = null;
+		Board board = new Board(cellNumbers);
+		Board solvedBoard = new Board(cellNumbers);
+		System.out.println(SudokuSolver.solveBackTracking(solvedBoard));
 		for (int row = 0; row < 9; row++) {
 			for (int col = 0; col < 9; col++) {
-				System.out.println("(" + row + "," + col + "): " + cellNumbers[row][col]);
+				if (board.getCellNumber(row, col) == 0) {
+					Integer n = Integer.valueOf(solvedBoard.getCellNumber(row, col));
+					String text = n.toString();
+					System.out.println(text);
+					Core.putText(newImg, text,
+							new Point(10 + 47*col,30 + 47*row),
+							Core.FONT_HERSHEY_SCRIPT_SIMPLEX,0.7 , new Scalar(255,255,255));
+				}
 			}
 		}
 		return getConvertedResult();
