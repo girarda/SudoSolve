@@ -41,10 +41,11 @@ public class SudokuGrabber {
 		newImg = warpSudokuGrid(corners, imgMatrix);
 		Mat[][] cells = getCells(newImg);
 		int[][] cellNumbers = digitRec.getSudokuNumbers(cells);
-
+		
 		intermediateMat = null;
 		cells = null;
 		Board board = new Board(cellNumbers);
+		
 		printSolution(board);
 		return getConvertedResult();
 	}
@@ -56,7 +57,6 @@ public class SudokuGrabber {
 				if (!board.isCellFixed(row, col)) {
 					Integer n = Integer.valueOf(board.getCellNumber(row, col));
 					String text = n.toString();
-					System.out.println(text);
 					Core.putText(newImg, text,
 							new Point(12 + (newImg.width()+1)/9*col,35 + (newImg.height()+1)/9*row),
 							Core.FONT_HERSHEY_SCRIPT_SIMPLEX,1 , new Scalar(255,255,255));
