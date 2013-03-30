@@ -23,6 +23,14 @@ public class Board {
 			}
 		}
 	}
+	
+	public Board(Board otherBoard) {
+		for (int row = 0; row < GRID_SIZE; row++) {
+			for (int col = 0; col < GRID_SIZE; col++) {
+				this.grid[row][col] = new Cell(otherBoard.getCellNumber(row, col));
+			}
+		}
+	}
 
 	public boolean isCellEmpty(int row, int col) {
 		return grid[row][col].isEmpty();

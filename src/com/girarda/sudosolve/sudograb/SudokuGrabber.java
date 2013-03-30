@@ -41,30 +41,28 @@ public class SudokuGrabber {
 		newImg = warpSudokuGrid(corners, imgMatrix);
 		Mat[][] cells = getCells(newImg);
 		int[][] cellNumbers = digitRec.getSudokuNumbers(cells);
-		//		for (int row = 0; row < 9; row++) {
-		//			for (int col = 0; col < 9; col++) {
-		//				System.out.println("(" + row + "," + col + "): " + cellNumbers[row][col]);
-		//			}
-		//		}
-		//		newImg = cells[7][8];
+
 		intermediateMat = null;
 		cells = null;
 		Board board = new Board(cellNumbers);
-		Board solvedBoard = new Board(cellNumbers);
-		System.out.println(SudokuSolver.solveBackTracking(solvedBoard));
+		printSolution(board);
+		return getConvertedResult();
+	}
+
+	private void printSolution(Board board) {
+		SudokuSolver.solveBackTracking(board);
 		for (int row = 0; row < 9; row++) {
 			for (int col = 0; col < 9; col++) {
-				if (board.getCellNumber(row, col) == 0) {
-					Integer n = Integer.valueOf(solvedBoard.getCellNumber(row, col));
+				if (!board.isCellFixed(row, col)) {
+					Integer n = Integer.valueOf(board.getCellNumber(row, col));
 					String text = n.toString();
 					System.out.println(text);
 					Core.putText(newImg, text,
-							new Point(10 + 47*col,30 + 47*row),
-							Core.FONT_HERSHEY_SCRIPT_SIMPLEX,0.7 , new Scalar(255,255,255));
+							new Point(12 + (newImg.width()+1)/9*col,35 + (newImg.height()+1)/9*row),
+							Core.FONT_HERSHEY_SCRIPT_SIMPLEX,1 , new Scalar(255,255,255));
 				}
 			}
 		}
-		return getConvertedResult();
 	}
 
 	private Point[] detectSudokuGrid(Mat matrix) {
@@ -91,28 +89,11 @@ public class SudokuGrabber {
 	}
 
 	private Mat warpSudokuGrid(Point[] corners, Mat matrix) {
-		Point ptTopLeft = corners[1];			Point ptTopRight = corners[0];
-		Point ptBottomLeft= corners[2];			Point ptBottomRight = corners[3];
-
-		double maxLength = (ptBottomLeft.x-ptBottomRight.x)*(ptBottomLeft.x-ptBottomRight.x) + (ptBottomLeft.y-ptBottomRight.y)*(ptBottomLeft.y-ptBottomRight.y);
-		double temp = (ptTopRight.x-ptBottomRight.x)*(ptTopRight.x-ptBottomRight.x) + (ptTopRight.y-ptBottomRight.y)*(ptTopRight.y-ptBottomRight.y);
-		if(temp > maxLength) maxLength = temp;
-
-		temp = (ptTopRight.x-ptTopLeft.x)*(ptTopRight.x-ptTopLeft.x) + (ptTopRight.y-ptTopLeft.y)*(ptTopRight.y-ptTopLeft.y);
-		if(temp > maxLength) maxLength = temp;
-
-		temp = (ptBottomLeft.x-ptTopLeft.x)*(ptBottomLeft.x-ptTopLeft.x) + (ptBottomLeft.y-ptTopLeft.y)*(ptBottomLeft.y-ptTopLeft.y);
-		if(temp > maxLength) maxLength = temp;
-
-		maxLength = Math.sqrt((double)maxLength);
-
 		Point[] src = new Point[4];
 		Point[] dst = new Point[4];
-		src[0] = ptTopLeft;            dst[0] = new Point(0,0);
-		src[1] = ptTopRight;        dst[1] = new Point(maxLength-1, 0);
-		src[2] = ptBottomRight;        dst[2] = new Point(maxLength-1, maxLength-1);
-		src[3] = ptBottomLeft;        dst[3] = new Point(0, maxLength-1);
-
+		
+		int maxLength = rectify(corners, src, dst);
+		
 		Mat srcMat = new Mat(4,1, CvType.CV_32FC2);
 		Mat dstMat = new Mat(4,1, CvType.CV_32FC2);
 		for (int i = 0; i < src.length; i++) {
@@ -124,6 +105,41 @@ public class SudokuGrabber {
 		Imgproc.warpPerspective(matrix, undistortedGrid, Imgproc.getPerspectiveTransform(srcMat, dstMat), new Size(maxLength, maxLength));
 
 		return undistortedGrid;
+	}
+	
+	private int rectify(Point[] corners, Point[] src, Point[] dst) {
+		Point ptTopLeft = corners[1];			Point ptTopRight = corners[0];
+		Point ptBottomLeft= corners[2];			Point ptBottomRight = corners[3];
+
+		int maxLength = (int) getMaxLength(ptTopLeft, ptTopRight, ptBottomLeft, ptBottomRight);
+		
+		src[0] = ptTopLeft;            dst[0] = new Point(0,0);
+		src[1] = ptTopRight;        dst[1] = new Point(maxLength-1, 0);
+		src[2] = ptBottomRight;        dst[2] = new Point(maxLength-1, maxLength-1);
+		src[3] = ptBottomLeft;        dst[3] = new Point(0, maxLength-1);
+		
+		return maxLength;
+	}
+	
+	private double getMaxLength(Point ptTopLeft, Point ptTopRight, Point ptBottomLeft, Point ptBottomRight) {
+		double maxLength = (ptBottomLeft.x-ptBottomRight.x)*(ptBottomLeft.x-ptBottomRight.x) + (ptBottomLeft.y-ptBottomRight.y)*(ptBottomLeft.y-ptBottomRight.y);
+		double temp = (ptTopRight.x-ptBottomRight.x)*(ptTopRight.x-ptBottomRight.x) + (ptTopRight.y-ptBottomRight.y)*(ptTopRight.y-ptBottomRight.y);
+		if(temp > maxLength) {
+			maxLength = temp;
+		}
+
+		temp = (ptTopRight.x-ptTopLeft.x)*(ptTopRight.x-ptTopLeft.x) + (ptTopRight.y-ptTopLeft.y)*(ptTopRight.y-ptTopLeft.y);
+		if(temp > maxLength) {
+			maxLength = temp;
+		}
+
+		temp = (ptBottomLeft.x-ptTopLeft.x)*(ptBottomLeft.x-ptTopLeft.x) + (ptBottomLeft.y-ptTopLeft.y)*(ptBottomLeft.y-ptTopLeft.y);
+		if(temp > maxLength) {
+			maxLength = temp;
+		}
+
+		maxLength = Math.sqrt((double)maxLength);
+		return maxLength;
 	}
 
 	private Mat[][] getCells(Mat undistortedGrid) {
