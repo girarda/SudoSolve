@@ -24,7 +24,7 @@ public class DigitRecognizer {
 		baseAPI.setVariable(TessBaseAPI.VAR_ACCURACYVSPEED, new Integer(TessBaseAPI.AVS_MOST_ACCURATE).toString());
 	}
 
-	int[][] getSudokuNumbers(Mat[][] cells) {
+	public int[][] getSudokuNumbers(Mat[][] cells) {
 		int[][] sudokuNumbers = new int[9][9];
 		for (int row = 0; row < 9; row++) {
 			for (int col = 0; col < 9; col++) {
@@ -34,7 +34,7 @@ public class DigitRecognizer {
 		return sudokuNumbers;
 	}
 
-	int getCellNumber(Mat cellMat) {
+	public int getCellNumber(Mat cellMat) {
 		Bitmap cellImg = Bitmap.createBitmap(cellMat.width(),cellMat.height(), Bitmap.Config.ARGB_8888);
 		ImageProcessing.matrixToBitmap(cellMat, cellImg);
 		cellImg = cellImg.copy(Bitmap.Config.ARGB_8888, true);

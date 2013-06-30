@@ -35,11 +35,8 @@ public class SudokuGrabber {
 	}
 
 	public Bitmap getSolvedSudoku() {
-		ImageProcessing.applyThreshold(intermediateMat);
-		Point[] sudokuGrid = detectSudokuGrid(intermediateMat);
-		Point[] corners = detectCorners(intermediateMat, sudokuGrid);
-		newImg = warpSudokuGrid(corners, imgMatrix);
-		Mat[][] cells = getCells(newImg);
+		preprocessSudokuImg();
+		Mat[][] cells = getSudokuCells();
 		int[][] cellNumbers = digitRec.getSudokuNumbers(cells);
 		
 		intermediateMat = null;
@@ -48,6 +45,19 @@ public class SudokuGrabber {
 		
 		printSolution(board);
 		return getConvertedResult();
+	}
+	
+	// protected for testing purposes
+	protected void preprocessSudokuImg() {
+		ImageProcessing.applyThreshold(intermediateMat);
+		Point[] sudokuGrid = detectSudokuGrid(intermediateMat);
+		Point[] corners = detectCorners(intermediateMat, sudokuGrid);
+		newImg = warpSudokuGrid(corners, imgMatrix);
+	}
+	
+	// protected for testing purposes
+	protected Mat[][] getSudokuCells() {
+		return getCells(newImg);
 	}
 
 	private void printSolution(Board board) {
